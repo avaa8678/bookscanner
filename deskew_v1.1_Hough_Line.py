@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 # Load the image
-image = cv2.imread('/home/pi/code/bookscanner/results/3.jpg')
+image = cv2.imread('/home/pi/bookscanner/results/3.jpg')
 
 p_width = 1600
 p_height = 1200
