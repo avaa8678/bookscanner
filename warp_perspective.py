@@ -171,7 +171,7 @@ def process_image(image, scale=0.3):
     p_height = int(height * scale)
 
     # Optionally display the original image for reference.
-    display_image('Original Image', image, p_width, p_height)
+    #display_image('Original Image', image, p_width, p_height)
 
     pts = detect_document(image)
     if pts is None:
@@ -179,13 +179,19 @@ def process_image(image, scale=0.3):
         return None
 
     warped = four_point_transform(image, pts)
-    display_image('Warped Image', warped, p_width, p_height)
+    #display_image('Warped Image', warped, p_width, p_height)
     return warped
 
 if __name__ == "__main__":
     # For testing, process a single image.
-    img_path = r'C:\Users\james\OneDrive\Documents\Coding\Bookscanner\bookscanner\examples\p6.jpg'
+    img_path = r'C:\Users\james\OneDrive\Documents\Coding\Bookscanner\bookscanner\examples\P2160696.jpg'
     image = cv2.imread(img_path)
+    
+    scale=0.3
+    height, width = image.shape[:2]
+    p_width = int(width * scale)
+    p_height = int(height * scale)
+
     if image is None:
         print("Error loading image.")
         exit()

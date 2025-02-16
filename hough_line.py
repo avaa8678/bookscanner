@@ -28,7 +28,7 @@ def detect_edges(morph):
 
 def detect_lines(edges):
     """Detect lines using the Hough Line Transform."""
-    return cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=50, minLineLength=30, maxLineGap=20)
+    return cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=100, minLineLength=30, maxLineGap=20)
 
 def compute_median_angle(lines):
     """Compute the median angle of valid detected lines."""
@@ -131,7 +131,7 @@ def process_image(image, scale=0.3):
 
 if __name__ == "__main__":
     # For testing, process a single image.
-    image_path = r'C:\Users\james\OneDrive\Documents\Coding\Bookscanner\bookscanner\examples\tiled.jpg'
+    image_path = r'C:\Users\james\OneDrive\Documents\Coding\Bookscanner\bookscanner\examples\P2160696.jpg'
     image = load_image(image_path)
 
     SCALE = 0.3

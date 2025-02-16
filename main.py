@@ -57,7 +57,7 @@ for image_file in image_files:
     left_img = result_img[:, :half_width]
     right_img = result_img[:, half_width:]
 
-    # Define filenames for the left and right halves
+    # Define filenames for the left and right halves2
     left_filename = f"img_{page_counter}_1.jpg"
     right_filename = f"img_{page_counter}_2.jpg"
 
