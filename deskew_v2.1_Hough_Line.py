@@ -2,7 +2,6 @@ import os
 import cv2
 import numpy as np
 
-
 def load_image(path):
     """Load the image from disk."""
     return cv2.imread(path)
@@ -77,14 +76,17 @@ def display_image(window_title, image, width=800, height=600):
 
 def save_result(image, original_path):
     """
+    Save the result image in a "/bookscanner/results" folder using the same file name as the original.
     """
     filename = os.path.basename(original_path)
+    results_folder = os.path.join("bookscanner", "results")
     os.makedirs(results_folder, exist_ok=True)
     save_path = os.path.join(results_folder, filename)
     cv2.imwrite(save_path, image)
     print("Result saved as:", save_path)
 
 def main():
+    image_path = r'C:\Users\james\OneDrive\Documents\Coding\Bookscanner\bookscanner\examples\p1.jpg'
     p_width = 800
     p_height = 600
 
@@ -110,10 +112,14 @@ def main():
     rotated = deskew_image(image, median_angle)
     
     # Sharpen the rotated image using Unsharp Masking
+    #sharpened = unsharp_mask(rotated, kernel_size=(9, 9), sigma=2.0, amount=2.0)
     
+    result_img = rotated
     # Save the result image in the "../Bookscanner/bookscanner/results" folder
+    save_result(result_img, image_path)
     
     # Display the final result
+    display_image('Sharpened Corrected Image', result_img, p_width, p_height)
 
 if __name__ == "__main__":
     main()
