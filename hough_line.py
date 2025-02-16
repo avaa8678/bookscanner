@@ -131,7 +131,7 @@ def process_image(image, scale=0.3):
 
 if __name__ == "__main__":
     # For testing, process a single image.
-    image_path = r'C:\Users\james\OneDrive\Documents\Coding\Bookscanner\bookscanner\examples\P2160696.jpg'
+    image_path = r'C:\Users\james\OneDrive\Documents\Coding\Bookscanner\bookscanner\examples\P1231231.jpg'
     image = load_image(image_path)
 
     SCALE = 0.3

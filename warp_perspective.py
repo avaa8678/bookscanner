@@ -184,7 +184,7 @@ def process_image(image, scale=0.3):
 
 if __name__ == "__main__":
     # For testing, process a single image.
-    img_path = r'C:\Users\james\OneDrive\Documents\Coding\Bookscanner\bookscanner\examples\P2160696.jpg'
+    img_path = r'C:\Users\james\OneDrive\Documents\Coding\Bookscanner\bookscanner\examples\P1231231.jpg'
     image = cv2.imread(img_path)
     
     scale=0.3

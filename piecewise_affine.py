@@ -144,7 +144,7 @@ def line_based_flatten(image_path):
     return flattened
 
 def main():
-    image_path = r"C:\Users\james\OneDrive\Documents\Coding\Bookscanner\bookscanner\examples\P2160695.jpg"
+    image_path = r"C:\Users\james\OneDrive\Documents\Coding\Bookscanner\bookscanner\examples\f1.jpg"
     flattened = line_based_flatten(image_path)
     if flattened is None:
         return

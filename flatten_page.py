@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-def flatten_page_vertical(image, num_slices=5, debug=False):
+def flatten_page_vertical(image, num_slices=50, debug=False):
     """
     Flatten a page by slicing vertically and applying a small perspective warp per slice.
     :param image: Input BGR image (NumPy array).
@@ -90,7 +90,7 @@ def main():
         return
 
     # Flatten the page vertically
-    flattened_image = flatten_page_vertical(image, num_slices=20, debug=False)
+    flattened_image = flatten_page_vertical(image, num_slices=5, debug=False)
 
     # Save and display the result
     out_path = image_path.replace(".jpg", "_flattened_vertical.jpg")
