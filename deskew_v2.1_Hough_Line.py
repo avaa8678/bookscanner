@@ -1,51 +1,79 @@
+import os
 import cv2
 import numpy as np
-import os
+from flatten_page import flatten_page
 
-def order_points(pts):
-    """
-    Orders a list of 4 points in the order:
-    top-left, top-right, bottom-right, bottom-left.
-    """
-    rect = np.zeros((4, 2), dtype="float32")
-    # sum of coordinates: smallest is top-left, largest is bottom-right
-    s = pts.sum(axis=1)
-    rect[0] = pts[np.argmin(s)]
-    rect[2] = pts[np.argmax(s)]
-    # difference: smallest is top-right, largest is bottom-left
-    diff = np.diff(pts, axis=1)
-    rect[1] = pts[np.argmin(diff)]
-    rect[3] = pts[np.argmax(diff)]
-    return rect
+def load_image(path):
+    """Load the image from disk."""
+    return cv2.imread(path)
 
-def four_point_transform(image, pts):
-    """
-    Applies a perspective transform to the image using the 4 given points.
-    """
-    rect = order_points(pts)
-    (tl, tr, br, bl) = rect
+def preprocess_image(image):
+    """Convert to grayscale, equalize histogram, apply blurs, and threshold."""
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray = cv2.equalizeHist(gray)
+    gray_blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    gray_blurred = cv2.medianBlur(gray_blurred, 3)
+    _, thresh = cv2.threshold(gray_blurred, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    return thresh
 
-    # Compute the width of the new image
-    widthA = np.linalg.norm(br - bl)
-    widthB = np.linalg.norm(tr - tl)
-    maxWidth = max(int(widthA), int(widthB))
+def apply_morphology(thresh):
+    """Apply morphological operations to the thresholded image."""
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    morph = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel, iterations=2)
+    morph = cv2.morphologyEx(morph, cv2.MORPH_OPEN, kernel, iterations=1)
+    return morph
 
-    # Compute the height of the new image
-    heightA = np.linalg.norm(tr - br)
-    heightB = np.linalg.norm(tl - bl)
-    maxHeight = max(int(heightA), int(heightB))
+def detect_edges(morph):
+    """Detect edges using the Canny algorithm."""
+    return cv2.Canny(morph, 30, 200, apertureSize=3)
 
-    # Destination coordinates for "birds-eye view"
-    dst = np.array([
-        [0, 0],
-        [maxWidth - 1, 0],
-        [maxWidth - 1, maxHeight - 1],
-        [0, maxHeight - 1]], dtype="float32")
+def detect_lines(edges):
+    """Detect lines using the Hough Line Transform."""
+    return cv2.HoughLinesP(edges, 1, np.pi / 180, threshold=50, minLineLength=30, maxLineGap=20)
 
-    # Compute the perspective transform matrix and apply it
-    M = cv2.getPerspectiveTransform(rect, dst)
-    warped = cv2.warpPerspective(image, M, (maxWidth, maxHeight))
-    return warped
+def compute_median_angle(lines):
+    """Compute the median angle of valid detected lines."""
+    if lines is None:
+        print("No lines detected.")
+        exit()
+    angles = []
+    for line in lines:
+        x1, y1, x2, y2 = line[0]
+        angle = np.degrees(np.arctan2(y2 - y1, x2 - x1))
+        if -45 < angle < 45:
+            angles.append(angle)
+    if not angles:
+        print("No valid angles found.")
+        exit()
+    return np.median(angles)
+
+def deskew_image(image, median_angle):
+    """Rotate the image to correct the skew."""
+    (h, w) = image.shape[:2]
+    center = (w // 2, h // 2)
+    M = cv2.getRotationMatrix2D(center, median_angle, 1.0)
+    rotated = cv2.warpAffine(image, M, (w, h), flags=cv2.INTER_LINEAR,
+                             borderMode=cv2.BORDER_CONSTANT, borderValue=(255, 255, 255))
+    return rotated
+
+def unsharp_mask(image, kernel_size=(5, 5), sigma=1.0, amount=1.5, threshold=0):
+    """Sharpen the image using Unsharp Masking."""
+    img_float = image.astype(np.float32)
+    blurred = cv2.GaussianBlur(img_float, kernel_size, sigma)
+    high_freq = img_float - blurred
+    if threshold > 0:
+        low_contrast_mask = np.absolute(high_freq) < threshold
+        high_freq[low_contrast_mask] = 0
+    sharpened = img_float + amount * high_freq
+    return np.clip(sharpened, 0, 255).astype(np.uint8)
+
+def display_image(window_title, image, width, height):
+    """Display the image in a window with a set size."""
+    cv2.namedWindow(window_title, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(window_title, width, height)
+    cv2.imshow(window_title, image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 def save_result(image, original_path):
     """
@@ -58,53 +86,61 @@ def save_result(image, original_path):
     cv2.imwrite(save_path, image)
     print("Result saved as:", save_path)
 
-def detect_document(image):
-    """
-    Detects the document contour in the image by:
-      - Converting to grayscale and blurring
-      - Detecting edges via Canny
-      - Finding contours and approximating to a polygon
-    Returns the four corner points if found, otherwise None.
-    """
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    #edged = cv2.Canny(blurred, 75, 200)
-    edged = cv2.Canny(blurred, 1, 10)
+def main():
+    image_path = r'C:\Users\james\OneDrive\Documents\Coding\Bookscanner\bookscanner\examples\p6.jpg'
+    # Load image
+    image = load_image(image_path)
+
+    SCALE = 0.3
+    # Get the dimensions
+    height, width = image.shape[:2]  # Extract only height and width, ignore channels
+    # Scale the preview width and height
+    p_width = int(width * SCALE)  # Convert to integer
+    p_height = int(height * SCALE)  # Convert to integer
+
+    # Preprocess image (grayscale, equalize, blur, threshold)
+    thresh = preprocess_image(image)
+    display_image('Threshold (Otsu)', thresh, p_width, p_height)
+    
+    # Morphological operations
+    morph = apply_morphology(thresh)
+    
+    # Edge detection
+    edges = detect_edges(morph)
+    display_image('Canny Edges', edges, p_width, p_height)    
+    
+    # Hough Line Transform
+    lines = detect_lines(edges)
+
+    # DEBUGGING Visualize detected lines
+    #
+    line_img = image.copy()
+    if lines is not None:
+        for line in lines:
+            x1, y1, x2, y2 = line[0]
+            length = np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+            if length > 100:  # Minimum line length threshold
+                cv2.line(line_img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+    display_image('Detected Lines', line_img, p_width, p_height)        
+    
+    # Compute the median angle from valid lines
+    median_angle = compute_median_angle(lines)
+    
+    # Deskew image based on median angle
+    rotated = deskew_image(image, median_angle)
+    
+    # Sharpen the rotated image using Unsharp Masking
+    # Ava - without shapen we can remove the "halo" around hte word.
+    #sharpened = unsharp_mask(rotated, kernel_size=(9, 9), sigma=2.0, amount=2.0)
 
 
-    # Find contours and sort by area (largest first)
-    cnts, _ = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:5]
+    flatten_img = flatten_page(rotated)
 
-    # Loop over the contours to find a quadrilateral
-    for c in cnts:
-        peri = cv2.arcLength(c, True)
-        #approx = cv2.approxPolyDP(c, 0.02 * peri, True)
-        approx = cv2.approxPolyDP(c, 0.02 * peri, True)
-        if len(approx) == 4:
-            return approx.reshape(4, 2)
-    print("Document contour not found.")
-    return None
+    result_img = flatten_img
+    # Save the result image in the "../Bookscanner/bookscanner/results" folder
+    save_result(result_img, image_path)
+    # Display the final result
+    display_image('Result Image', result_img, p_width, p_height)
 
 if __name__ == "__main__":
-    # Provide the path to your image
-    img_path = r'C:\Users\james\OneDrive\Documents\Coding\Bookscanner\bookscanner\examples\p1.jpg'
-    image = cv2.imread(img_path)
-    if image is None:
-        print("Error loading image.")
-        exit()
-
-    pts = detect_document(image)
-    if pts is None:
-        exit()
-
-    warped = four_point_transform(image, pts)
-
-    # Display the original and scanned images (optional)
-    cv2.imshow("Original Image", image)
-    cv2.imshow("Scanned Image", warped)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-    # Save the result using your save_result function
-    save_result(warped, img_path)
+    main()

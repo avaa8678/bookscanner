@@ -3,7 +3,6 @@ import cv2
 import numpy as np
 
 
-
 def load_image(path):
     """Load the image from disk."""
     return cv2.imread(path)
