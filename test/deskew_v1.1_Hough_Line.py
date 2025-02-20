@@ -2,14 +2,9 @@ import cv2
 import numpy as np
 
 # Load the image
-<<<<<<< HEAD
 
 image = cv2.imread(r'C:\Users\james\OneDrive\Documents\Coding\Bookscanner\bookscanner\examples\P1.jpg')
 
-=======
-image = cv2.imread(r'C:\Users\james\OneDrive\Documents\Coding\Bookscanner\bookscanner\examples\P1.jpg')
-
->>>>>>> d1ef667cdb6feb0ceb7e399de085e4f9505d3fbe
 p_width = 800
 p_height = 600
 
