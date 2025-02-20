@@ -7,10 +7,10 @@ import hough_line         # Your Hough_Line module
 import warp_perspective  # Import your module
 
 # Base folder for results
-base_results = "C:/Users/james/OneDrive/Documents/Coding/Bookscanner/bookscanner/output"
+base_results = "C:/Users/avale/Coilgun/bookscanner/output/warp_perspective_scale"
 
 # Folder containing the raw scanned images
-input_folder = "C:/Users/james/OneDrive/Documents/Coding/Bookscanner/bookscanner/raw"  # Update this path to where your original images are stored
+input_folder = "C:/Users/avale/Coilgun/bookscanner/raw"  # Update this path to where your original images are stored
 
 # Create a new output folder using the current timestamp
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
