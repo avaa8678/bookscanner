@@ -2,10 +2,8 @@ import cv2
 import numpy as np
 
 # Load the image
-<<<<<<< HEAD:deskew_v1.1_Hough_Line.py
-=======
+
 image = cv2.imread(r'C:\Users\james\OneDrive\Documents\Coding\Bookscanner\bookscanner\examples\P1.jpg')
->>>>>>> d1ef667cdb6feb0ceb7e399de085e4f9505d3fbe:test/deskew_v1.1_Hough_Line.py
 
 p_width = 800
 p_height = 600
